@@ -19,17 +19,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Reset button state
                 button.classList.remove('disabled');
                 overlay.classList.add('d-none');
-                
-                // Reset field value
+
+                // Keep calendar empty but restore original value internally
                 if (fp) {
-                    if (originalDate) {
-                        fp.setDate(originalDate);
-                    } else {
-                        fp.clear();
-                    }
+                    fp.clear();
                 }
                 input.value = originalDate || '';
-                
+
                 // Reset summary
                 if (resumeElem) {
                     resumeElem.style.display = 'none';
@@ -187,6 +183,22 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // Add form submission protection
+    const form2 = document.querySelector('form[action="/submit_readequacao"]');
+    if (form2) {
+        form2.addEventListener('submit', function() {
+            const submitButton = this.querySelector('button[type="submit"]');
+            if (submitButton) {
+                submitButton.disabled = true;
+                submitButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Salvando...';
+                const alertDiv = document.createElement('div');
+                alertDiv.classList.add('alert', 'alert-info', 'alert-dismissible', 'fade', 'show', 'mt-4', 'mb-4');
+                alertDiv.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Aguarde! Readequação sendo processada. Este processo pode levar por volta de 1 minuto.<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>';
+                submitButton.parentElement.insertBefore(alertDiv, submitButton);
+            }
+        });
+    }
+
     // Dismiss alerts after 5 seconds
     document.querySelectorAll('.alert:not(.alert-danger)').forEach(function(alert) {
         setTimeout(function() {
@@ -302,35 +314,36 @@ const fields = {
     }
 };
 
-// Function to update the summary of changes
-function atualizarResumoMudancas() {
-    let hasChanges = false;
+        function atualizarResumoMudancas() {
+            let hasChanges = false;
 
-    // Process each field
-    Object.entries(fields).forEach(([fieldName, fieldInfo]) => {
-        const currentValue = getInputValue(fieldInfo.inputId);
-        const originalValue = getHiddenValue(fieldName);
-        const resumeElem = document.getElementById(fieldInfo.resumeId);
-        const newValueElem = document.getElementById(fieldInfo.newValueId);
+            // Process each field
+            Object.entries(fields).forEach(([fieldName, fieldInfo]) => {
+                const currentValue = getInputValue(fieldInfo.inputId);
+                const originalValue = getHiddenValue(fieldName);
+                const resumeElem = document.getElementById(fieldInfo.resumeId);
+                const newValueElem = document.getElementById(fieldInfo.newValueId);
 
-        if (!resumeElem || !newValueElem) return;
+                if (!resumeElem || !newValueElem) return;
 
-        const deleteButton = document.querySelector(`button[data-target="${fieldInfo.inputId}"]`);
-        const isDeleted = deleteButton && deleteButton.classList.contains('disabled');
+                const deleteButton = document.querySelector(`button[data-target="${fieldInfo.inputId}"]`);
+                const isDeleted = deleteButton && deleteButton.classList.contains('disabled');
+                const section = deleteButton ? deleteButton.dataset.section : ''; // Safely get section
 
-        if (isDeleted) {
-            resumeElem.style.display = 'block';
-            const section = deleteButton.dataset.section;
-            newValueElem.textContent = `Data ${section} apagada`;
-            hasChanges = true;
-        } else if (currentValue && !isEmpty(currentValue) && currentValue !== originalValue) {
-            resumeElem.style.display = 'block';
-            newValueElem.textContent = currentValue;
-            hasChanges = true;
-        } else {
-            resumeElem.style.display = 'none';
-        }
-    });
+                if (isDeleted && originalValue && !isEmpty(originalValue)) {
+                    resumeElem.style.display = 'block';
+                    newValueElem.textContent = `Data ${section} será apagada`;
+                    hasChanges = true;
+                } else if (currentValue && !isEmpty(currentValue) && currentValue !== originalValue) {
+                    resumeElem.style.display = 'block';
+                    newValueElem.textContent = currentValue;
+                    hasChanges = true;
+                } else {
+                    resumeElem.style.display = 'none';
+                }
+            });
+
+
 
     // Update no changes message
     const semMudancas = document.getElementById('sem-mudancas');
