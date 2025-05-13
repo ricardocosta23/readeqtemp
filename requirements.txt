@@ -1,0 +1,13 @@
+Flask
+requests
+gunicorn
+Werkzeug
+pandas
+email-validator
+flask
+flask-sqlalchemy
+gunicorn
+pandas
+psycopg2-binary
+requests
+werkzeug
